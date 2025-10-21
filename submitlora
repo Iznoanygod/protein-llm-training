@@ -1,0 +1,33 @@
+#!/bin/bash
+# FILENAME:  submitlora
+
+#SBATCH --job-name lorafinetune
+#SBATCH -A nairr240405-gpu
+#SBATCH -p gpu
+#SBATCH --nodes=2                   # number of nodes
+#SBATCH --ntasks-per-node=1         # number of MP tasks
+#SBATCH --gres=gpu:2                # number of GPUs per node
+#SBATCH --cpus-per-task=1           # number of cores per tasks
+#SBATCH --time=00:30:00             # maximum execution time (HH:MM:SS)
+
+module load conda
+module use /home/x-apark4/privatemodules
+module load conda-env/unsloth-py3.12.8
+
+export GPUS_PER_NODE=2
+
+head_node_ip=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
+
+export LAUNCHER="accelerate launch \
+    --num_processes $((SLURM_NNODES * GPUS_PER_NODE)) \
+    --num_machines $SLURM_NNODES \
+    --rdzv_backend c10d \
+    --config_file accelerate.yaml \
+    --multi_gpu \
+    --main_process_ip $head_node_ip \
+    --machine_rank $SLURM_PROCID \
+    "
+    
+# This step is necessary because accelerate launch does not handle multiline arguments properly
+export CMD="$LAUNCHER multinode.py" 
+srun $CMD

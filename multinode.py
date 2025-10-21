@@ -21,11 +21,12 @@ lora_config = LoraConfig(
     task_type="CAUSAL_LM",
 )
 model = AutoModelForCausalLM.from_pretrained(
-    model_name, 
+    model_name, dtype=torch.bfloat16#, device_map="auto"
 )
+
 lora_model = get_peft_model(model, lora_config)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-
+lora_model.print_trainable_parameters()
 SYSTEM_PROMPT = """
 Respond in the following format:
 <reasoning>
@@ -118,15 +119,17 @@ training_args = GRPOConfig(
     lr_scheduler_type = "cosine",
     optim = "paged_adamw_8bit",
     logging_steps = 1,
-    generation_batch_size = 8,
-    per_device_train_batch_size = 1,
+    generation_batch_size = 4,
+    per_device_train_batch_size = 2,
     gradient_accumulation_steps = 1, # Increase to 4 for smoother training
+    bf16=True,
+    gradient_checkpointing=False,
     num_generations = 4, # Decrease if out of memory
     max_prompt_length = max_prompt_length,
     max_completion_length = max_seq_length - max_prompt_length,
     # num_train_epochs = 1, # Set to 1 for a full training run
-    max_steps = 250,
-    save_steps = 250,
+    max_steps = 100,
+    save_steps = 100,
     max_grad_norm = 0.1,
     report_to = "none", # Can use Weights & Biases
     output_dir = "outputs",
