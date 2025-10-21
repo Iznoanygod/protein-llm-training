@@ -1,7 +1,7 @@
 import re
 import os
 os.environ["HF_TOKEN"] = ""
-os.environ["HF_HOME"] = "/anvil/scratch/x-apark4/cache"
+os.environ["HF_HOME"] = "/work/hdd/bdyk/apark4/huggingface"
 import torch
 import re
 from datasets import load_dataset, Dataset
@@ -119,7 +119,7 @@ training_args = GRPOConfig(
     lr_scheduler_type = "cosine",
     optim = "paged_adamw_8bit",
     logging_steps = 1,
-    generation_batch_size = 4,
+    generation_batch_size = 16,
     per_device_train_batch_size = 2,
     gradient_accumulation_steps = 1, # Increase to 4 for smoother training
     bf16=True,
