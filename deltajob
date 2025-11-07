@@ -1,0 +1,30 @@
+#!/bin/bash
+# FILENAME:  submitlora
+
+#SBATCH --job-name lorafinetune
+#SBATCH -A bdyk-delta-gpu
+#SBATCH -p gpuA40x4
+#SBATCH --nodes=1                   # number of nodes
+#SBATCH --ntasks-per-node=1         # number of MP tasks
+#SBATCH --gpus-per-node=4           # number of GPUs per node
+#SBATCH --cpus-per-task=4           # number of cores per tasks
+#SBATCH --mem=64G
+#SBATCH --time=04:00:00             # maximum execution time (HH:MM:SS)
+
+export GPUS_PER_NODE=4
+
+head_node_ip=$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1)
+
+export LAUNCHER="accelerate launch \
+    --num_processes $((SLURM_NNODES * GPUS_PER_NODE)) \
+    --num_machines $SLURM_NNODES \
+    --rdzv_backend c10d \
+    --config_file accelerate.yaml \
+    --multi_gpu \
+    --main_process_ip $head_node_ip \
+    --machine_rank $SLURM_PROCID \
+    "
+    
+# This step is necessary because accelerate launch does not handle multiline arguments properly
+export CMD="$LAUNCHER multinode.py" 
+srun $CMD
