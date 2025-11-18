@@ -9,7 +9,7 @@ from peft import LoraConfig, get_peft_model
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 from trl import GRPOConfig, GRPOTrainer
 max_seq_length = 2048
-lora_rank = 256
+lora_rank = 128
 
 model_name = "meta-llama/Llama-3.1-8B-Instruct"
 
@@ -128,7 +128,7 @@ training_args = GRPOConfig(
     max_prompt_length = max_prompt_length,
     max_completion_length = max_seq_length - max_prompt_length,
     # num_train_epochs = 1, # Set to 1 for a full training run
-    max_steps = 100,
+    max_steps = 1000,
     save_steps = 100,
     max_grad_norm = 0.1,
     report_to = "trackio", # Can use Weights & Biases
