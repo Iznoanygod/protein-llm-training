@@ -9,7 +9,7 @@ from peft import LoraConfig, get_peft_model
 from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 from trl import GRPOConfig, GRPOTrainer
 max_seq_length = 2048
-lora_rank = 128
+lora_rank = 16
 
 model_name = "meta-llama/Llama-3.1-8B-Instruct"
 
@@ -26,6 +26,8 @@ model = AutoModelForCausalLM.from_pretrained(
 
 lora_model = get_peft_model(model, lora_config)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
+#lora_model.gradient_checkpointing_enable()
+#lora_model.config.use_cache = False
 lora_model.print_trainable_parameters()
 SYSTEM_PROMPT = """
 Respond in the following format:
@@ -119,29 +121,29 @@ training_args = GRPOConfig(
     lr_scheduler_type = "cosine",
     optim = "paged_adamw_8bit",
     logging_steps = 1,
-    generation_batch_size = 16,
-    per_device_train_batch_size = 2,
+    generation_batch_size = 4,
+    per_device_train_batch_size = 1,
     gradient_accumulation_steps = 1, # Increase to 4 for smoother training
     bf16=True,
     gradient_checkpointing=False,
     num_generations = 4, # Decrease if out of memory
     max_prompt_length = max_prompt_length,
     max_completion_length = max_seq_length - max_prompt_length,
-    # num_train_epochs = 1, # Set to 1 for a full training run
-    max_steps = 1000,
+    num_train_epochs = 10, # Set to 1 for a full training run
+    # max_steps = 1000,
     save_steps = 100,
     max_grad_norm = 0.1,
     report_to = "trackio", # Can use Weights & Biases
     run_name="1node4gpu-8b",
-    output_dir = "outputs",
+    output_dir = "1n4g8b32l",
 )
 
 trainer = GRPOTrainer(
     model = lora_model,
     processing_class = tokenizer,
     reward_funcs = [
-        xmlcount_reward_func,
-        soft_format_reward_func,
+        #xmlcount_reward_func,
+        #soft_format_reward_func,
         strict_format_reward_func,
         correctness_reward_func,
     ],
